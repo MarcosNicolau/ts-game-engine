@@ -1,0 +1,25 @@
+{
+	"ts-node": { "files": true },
+	"compilerOptions": {
+		"jsx": "react",
+		"target": "es5",
+		"module": "ES6",
+		"moduleResolution": "node",
+		"allowJs": false,
+		"allowSyntheticDefaultImports": true,
+		"emitDecoratorMetadata": true,
+		"experimentalDecorators": true,
+		"resolveJsonModule": true,
+		"declaration": true,
+		"outDir": "dist",
+		"lib": ["es7", "dom"],
+		"skipDefaultLibCheck": true,
+		"skipLibCheck": true,
+		"composite": true,
+		"strict": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"typeRoots": ["./src/types"]
+	},
+	"include": ["src/**/*", "package.json", "__tests__", "example/"]
+}
