@@ -2,14 +2,15 @@
 -   [x] Create GameUIComponent
 -   [x] Create GameScene
 -   [ ] Re-do the entire engine:
-    -   [ x ] Render ui (ditch react completely and ui should get updated through scripting)
-    -   [ x ] Scene loading, transition, etc
+    -   [x] Render ui (ditch react completely and ui should get updated through scripting)
+    -   [x] Scene loading, transition, etc
     -   [x] Dynamically add and destroy GameObject
     -   [x] Trigger framing functions
     -   [ ] make gameObjects private and access them with a getter that finds by id or tag or name
     -   [ ] Draw to canvas (camera and spritesRenderers)
     -   [ ] Trigger collisions events
     -   [ ] Create some kind of broadcasting events (example: call all the functions that have "x" name)
+    -   [ ] Create some kind of state management
 -   [ ] Add Input(controls) API
 -   [ ] Add AudioSource Component
 -   [ ] Add Animated sprite renderer (custom shapes, etc) Component
