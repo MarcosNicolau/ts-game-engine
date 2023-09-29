@@ -41,13 +41,19 @@ export class GameEngine2d {
 		ctx.clearRect(0, 0, this.ui.canvas.width, this.ui.canvas.height);
 		//Check if element is inside the camera of the game
 		this.activeScene.gameObjects
-			.filter((gameObject) => !gameObject.component.spriteRenderer)
+			.filter(
+				(gameObject) =>
+					!gameObject.component.spriteRenderer ||
+					gameObject.component.spriteRenderer.hidden
+			)
 			.filter((gameObject) => {
 				const cameraPos = this.activeScene.mainCamera.position;
 				multiDimensionalBound.rectangle(gameObject.component.transform.position, {
 					center: cameraPos,
-					xDisplacement: this.ui.canvas.width,
-					yDisplacement: this.ui.canvas.width,
+					//Display 10 pixels more so that if they spam when appearing in the screen
+					xDisplacement: this.ui.canvas.width + 10,
+					//Display 10 pixels more so that if they spam when appearing in the screen
+					yDisplacement: this.ui.canvas.height + 10,
 				});
 			})
 			.forEach((gameObject) => {

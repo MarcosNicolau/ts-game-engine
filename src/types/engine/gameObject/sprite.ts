@@ -18,6 +18,7 @@ export type GameSpriteComponent<T extends "primitive" | "image_url" = "primitive
 	style: Style;
 	type: T;
 	sprite: SpriteUnions[T];
+	hidden: boolean;
 };
 
 // export type GameObjectAnimatedSprite = {
