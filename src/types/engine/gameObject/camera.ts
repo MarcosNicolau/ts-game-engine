@@ -1,8 +1,6 @@
 import { Position } from "./transform";
 
 export type GameCameraComponent = {
-	position: Position;
+	position: Omit<Position, "z">;
 	zoom: number;
-	// In degrees
-	angle: number;
 };

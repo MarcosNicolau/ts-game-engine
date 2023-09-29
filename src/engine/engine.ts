@@ -5,6 +5,7 @@ import { draw } from "../utils/draw";
 import { pushAtSortPosition } from "../utils/array";
 import { GameScene } from "../types/engine/gameScene";
 import { GameScriptComponent } from "../types/engine/gameObject/script";
+import { multiDimensionalBound } from "../utils/transform";
 
 export class GameEngine2d {
 	//@ts-expect-error gets initialized but typescript is not smart enough to realize that id does it with load scene @url ./src/engine/engine.ts:22:0
@@ -38,9 +39,20 @@ export class GameEngine2d {
 
 	private drawGameObjects = (ctx: CanvasRenderingContext2D) => {
 		ctx.clearRect(0, 0, this.ui.canvas.width, this.ui.canvas.height);
-		this.activeScene.gameObjects.forEach((gameObject) => {
-			draw({ ctx, gameObject });
-		});
+		//Check if element is inside the camera of the game
+		this.activeScene.gameObjects
+			.filter((gameObject) => !gameObject.component.spriteRenderer)
+			.filter((gameObject) => {
+				const cameraPos = this.activeScene.mainCamera.position;
+				multiDimensionalBound.rectangle(gameObject.component.transform.position, {
+					center: cameraPos,
+					xDisplacement: this.ui.canvas.width,
+					yDisplacement: this.ui.canvas.width,
+				});
+			})
+			.forEach((gameObject) => {
+				draw({ ctx, gameObject });
+			});
 	};
 
 	// ======== Event functions ========
@@ -85,12 +97,26 @@ export class GameEngine2d {
 		pushAtSortPosition<GameObject>(
 			this.activeScene.gameObjects,
 			gameObject,
+			// The objects are drawn in order, so in order to respect the z pos we have to push them based on it
 			(a, b) => a.component.transform.position.z - b.component.transform.position.z,
 			0
 		);
 
 	public bulkAddGameObjects = (gameObjects: GameObject[]) =>
 		gameObjects.forEach((gameObject) => this.addGameObject(gameObject));
+
+	public getGameObjectByName = (name: string) =>
+		this.activeScene.gameObjects.find((gameObject) => gameObject.name === name) || null;
+	public getGameObjectById = (id: string) =>
+		this.activeScene.gameObjects.find((gameObject) => gameObject.id === id) || null;
+	public getGameObjectByTag = (tagToFind: string) =>
+		this.activeScene.gameObjects.find(
+			(gameObject) => gameObject.tags.find((tag) => tag === tagToFind) || null
+		);
+	public getAllGameObjectsWithTag = (tagToFind: string) =>
+		this.activeScene.gameObjects.filter(
+			(gameObject) => !gameObject.tags.find((tag) => tag == tagToFind)
+		);
 
 	start = this.onStart;
 

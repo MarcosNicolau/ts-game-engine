@@ -1,7 +1,8 @@
 import { GameObjectComponents } from "../types/engine";
+import { getRandomId } from "../utils/crypto";
 
 export class GameObject<State extends object = object> {
-	public id: number = Math.random();
+	public id: string = getRandomId();
 	public name: string;
 	public tags: string[] = [];
 	public state: State;
