@@ -4,12 +4,16 @@ This a simple game engine I built for my own needs for a game but ended up being
 
 ## Roadmap
 
--   [x] UI API (React, Tailwind)
--   [ ] Control API
+This engine works under the HTML Canvas, for know only for 2d games. Anyway, we are planning to support 3d with the use of three.js.
+
+-   [x] UI API
 -   [ ] Scene management
+-   [ ] Control API
 -   [ ] Audio feature API
--   [ ] Tailwind default support for UI (Tailwind)
--   [ ] Add testing
 -   [ ] Create examples and documentation
+-   [ ] Add tests
+-   [ ] TileMap GameObject
 -   [ ] RigidBody
--   [ ] 3d support with three.js maybe
+-   [ ] Local save API
+-   [ ] Networking API
+-   [ ] Create a browser UI to interact with the engine?

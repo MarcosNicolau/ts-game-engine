@@ -1,15 +1,25 @@
-import { GameCollision, Scale, Position, runnerFn, GameObjectType } from "../types/engine";
+import { GameObjectComponents } from "../types/engine";
 
-export class GameObject {
-	public name = "";
+export class GameObject<State extends object = object> {
 	public id: number = Math.random();
-	public tags?: string[];
-	public position: Position = { x: 0, y: 0, z: 0 };
-	public scale: Scale = { x: 0, y: 0 };
-	public color?: string;
-	public type: GameObjectType = "Empty";
-	onStart: runnerFn = () => null;
-	onUpdate: runnerFn = () => null;
-	onCollision: (collisionInfo: GameCollision) => void = () => null;
-	onPause: runnerFn = () => null;
+	public name: string;
+	public tags: string[] = [];
+	public state: State;
+	public component: Partial<Omit<GameObjectComponents<State>, "transform">> &
+		Pick<GameObjectComponents, "transform">;
+
+	constructor({
+		name,
+		state,
+		component,
+	}: {
+		name: string;
+		state: State;
+		component: Partial<Omit<GameObjectComponents<State>, "transform">> &
+			Pick<GameObjectComponents, "transform">;
+	}) {
+		this.name = name;
+		this.state = state;
+		this.component = component;
+	}
 }

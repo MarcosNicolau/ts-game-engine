@@ -1,26 +1,64 @@
 import { GameObject } from "../engine";
-import { GameObjectType } from "../types/engine";
+import { GameTransformComponent, SpritePrimitives } from "../types/engine";
 
-export const draw: {
-	[key in Exclude<GameObjectType, "Audio">]: ({
-		gameObject,
+type Draw = ({
+	gameObject,
+	ctx,
+}: {
+	gameObject: GameObject;
+	ctx: CanvasRenderingContext2D;
+}) => void;
+
+type PrimitiveDrawer = {
+	[key in SpritePrimitives]: ({
 		ctx,
+		transform,
 	}: {
-		gameObject: GameObject;
 		ctx: CanvasRenderingContext2D;
+		transform: GameTransformComponent;
 	}) => void;
-} = {
-	AnimatedAsset: () => {},
-	Circle: () => {},
-	Rectangle: ({ ctx, gameObject }) => {
+};
+
+const primitiveDrawer: PrimitiveDrawer = {
+	ellipse: ({ ctx, transform }) =>
+		ctx.ellipse(
+			transform.position.x,
+			transform.position.y,
+			transform.scale.x,
+			transform.scale.y,
+			transform.rotation,
+			0,
+			0
+		),
+	rectangle: ({ ctx, transform }) => {
 		ctx.fillRect(
-			gameObject.position.x,
-			gameObject.position.y,
-			gameObject.scale.x,
-			gameObject.scale.y
+			transform.position.x,
+			transform.position.y,
+			transform.scale.x,
+			transform.scale.y
 		);
+		ctx.rotate(transform.rotation);
 	},
-	StaticAsset: () => {},
-	Text: () => {},
-	Empty: () => {},
+};
+
+export const draw: Draw = ({ ctx, gameObject }) => {
+	const spriteToRender = gameObject.component.spriteRenderer;
+	const transform = gameObject.component.transform;
+	if (!spriteToRender) return;
+	if (spriteToRender.type === "primitive") {
+		ctx.fillStyle = spriteToRender.style?.color || "#0";
+		primitiveDrawer[spriteToRender.sprite]({ ctx, transform });
+		return;
+	}
+	if (spriteToRender.type === "image_url") {
+		const imageEl = document.createElement("img");
+		imageEl.src = spriteToRender.sprite;
+		ctx.drawImage(
+			imageEl,
+			transform.position.x,
+			transform.position.y,
+			transform.scale.x,
+			transform.scale.y
+		);
+	}
 };

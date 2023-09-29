@@ -1,116 +1,96 @@
 import { GameObject } from "./gameObject";
 import { GameUI } from "./ui";
-import { GameSize, GameUIComponent, runnerFn } from "../types/engine";
+import { GameSize } from "../types/engine/engine";
 import { draw } from "../utils/draw";
 import { pushAtSortPosition } from "../utils/array";
+import { GameScene } from "../types/engine/gameScene";
+import { GameScriptComponent } from "../types/engine/gameObject/script";
 
 export class GameEngine2d {
-	ui: GameUI;
-	isPaused = false;
-	private uiComponents: GameUIComponent[] = [];
-	private gameObjects: GameObject[] = [];
+	//@ts-expect-error gets initialized but typescript is not smart enough to realize that id does it with load scene @url ./src/engine/engine.ts:22:0
+	private activeScene: GameScene;
+	private scenes: (() => GameScene)[] = [];
+	private ui: GameUI;
 	private animationFrame = NaN;
+	public isPaused = false;
 
-	constructor(size: Partial<GameSize>) {
+	constructor(
+		size: Partial<GameSize>,
+		{ scenes, startSceneIndex }: { scenes: (() => GameScene)[]; startSceneIndex: number }
+	) {
+		this.scenes = scenes;
 		this.ui = new GameUI(size);
+		this.loadScene(startSceneIndex);
 	}
 
-	private triggerRender = () => {
-		this.ui.render({
-			gameObjects: this.gameObjects,
-			uiComponents: this.uiComponents,
-			isPaused: this.isPaused,
-		});
+	// ======== Rendering, drawing and scene loading ========
+
+	public loadScene = (sceneIndex: number) => {
+		this.activeScene = this.scenes[sceneIndex]();
+		this.ui.clear();
+		this.ui.ctx.clearRect(0, 0, this.ui.canvas.width, this.ui.canvas.height);
+		this.onStart();
+	};
+
+	public render = (gameObject: GameObject) => {
+		this.ui.render(gameObject);
 	};
 
 	private drawGameObjects = (ctx: CanvasRenderingContext2D) => {
 		ctx.clearRect(0, 0, this.ui.canvas.width, this.ui.canvas.height);
-		this.gameObjects.forEach((gameObject) => {
-			ctx.fillStyle = gameObject.color || "#0";
-			if (gameObject.type === "Audio") return;
-			draw[gameObject.type]({ ctx, gameObject });
+		this.activeScene.gameObjects.forEach((gameObject) => {
+			draw({ ctx, gameObject });
 		});
 	};
 
-	private collisions() {
-		this.gameObjects.forEach((gameObject_1) => {
-			if (!gameObject_1.type) return;
-			this.gameObjects.forEach((gameObject_2) => {
-				if (gameObject_2.id == gameObject_1.id) return;
-				//Collides on the x axis
-				if (gameObject_1.position.x) {
-					//Collides on the y axis
-					if (gameObject_1.position.y) {
-						gameObject_1.onCollision({
-							gameObject: gameObject_2,
-							at: { x: 1, y: 1, z: 1 },
-						});
-					}
-				}
-			});
-		});
-	}
+	// ======== Event functions ========
+	private fireGameObjectFn = (cb: (script: ReturnType<GameScriptComponent>) => void) => {
+		this.activeScene.gameObjects.forEach(
+			(gameObject) =>
+				gameObject.component.scripts?.forEach((script) => cb(script(gameObject)))
+		);
+	};
 
 	private onStart = () => {
-		this.triggerRender();
-		if (!this.ui.canvas) return;
-		const ctx = this.ui.canvas.getContext("2d");
-		if (!ctx) throw new Error("Canvas not supported");
-		this.gameObjects.forEach((gameObject) => gameObject.onStart({ ctx }));
+		const ctx = this.ui.ctx;
+		this.ui.initialRender(this.activeScene.gameObjects);
 		this.drawGameObjects(ctx);
+		this.fireGameObjectFn((script) => script.onStart({ ctx }));
 		this.animationFrame = window.setTimeout(
-			() => window.requestAnimationFrame(() => this.onUpdate({ ctx })),
+			() => window.requestAnimationFrame(this.onUpdate),
 			60
 		);
 		console.log("Game started");
 	};
 
-	private onUpdate: runnerFn = (args) => {
-		this.gameObjects.forEach((gameObject) => gameObject.onUpdate(args));
-		const ctx = args.ctx;
+	private onUpdate = () => {
+		const ctx = this.ui.ctx;
+		this.fireGameObjectFn((script) => script.onUpdate({ ctx }));
 		this.drawGameObjects(ctx);
-		this.collisions();
-		this.triggerRender();
-		this.animationFrame = window.requestAnimationFrame(() => this.onUpdate(args));
+		this.animationFrame = window.requestAnimationFrame(this.onUpdate);
 	};
 
 	private onPause = () => {
-		if (!this.ui.canvas) return;
-		const ctx = this.ui.canvas.getContext("2d");
-		if (!ctx) throw new Error("Canvas not supported");
-		this.gameObjects.forEach((gameObject) => gameObject.onPause({ ctx }));
-		this.triggerRender();
-		console.log("Game paused");
+		this.fireGameObjectFn((script) => script.onPause({ ctx: this.ui.ctx }));
 	};
 
-	//Based on the z index
-	addGameObject = (gameObject: GameObject) => {
+	// ======== Game Objects ========
+
+	public destroy = (gameObject: GameObject) =>
+		(this.activeScene.gameObjects = this.activeScene.gameObjects.filter(
+			(el) => el.id === gameObject.id
+		));
+
+	public addGameObject = (gameObject: GameObject) =>
 		pushAtSortPosition<GameObject>(
-			this.gameObjects,
+			this.activeScene.gameObjects,
 			gameObject,
-			(a, b) => a.position.z - b.position.z,
+			(a, b) => a.component.transform.position.z - b.component.transform.position.z,
 			0
 		);
-	};
 
-	bulkAddGameObjects = (gameObjects: GameObject[]) => {
-		gameObjects.forEach((gameObject) => {
-			pushAtSortPosition<GameObject>(
-				this.gameObjects,
-				gameObject,
-				(a, b) => b.position.z - a.position.z,
-				0
-			);
-		});
-	};
-
-	addUIComponent = (component: GameUIComponent) => {
-		this.uiComponents.push(component);
-	};
-
-	bulkAddUIComponents = (components: GameUIComponent[]) => {
-		components.forEach((component) => this.uiComponents.push(component));
-	};
+	public bulkAddGameObjects = (gameObjects: GameObject[]) =>
+		gameObjects.forEach((gameObject) => this.addGameObject(gameObject));
 
 	start = this.onStart;
 
@@ -118,5 +98,11 @@ export class GameEngine2d {
 		window.cancelAnimationFrame(this.animationFrame);
 		this.isPaused = true;
 		this.onPause();
+		console.log("Game paused");
+	};
+
+	unPause = () => {
+		this.animationFrame = window.requestAnimationFrame(this.onUpdate);
+		this.isPaused = false;
 	};
 }
