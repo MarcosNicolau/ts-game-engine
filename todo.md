@@ -13,6 +13,7 @@
     -   [ ] Create some kind of state management
 -   [ ] Add Input(controls) API
 -   [ ] Add AudioSource Component
+-   [ ] Add ui auto re rendering and all that (follow kinda whar redom does)
 -   [ ] Add Animated sprite renderer (custom shapes, etc) Component
 -   [ ] Create an example
 -   [ ] TileMaps Component
