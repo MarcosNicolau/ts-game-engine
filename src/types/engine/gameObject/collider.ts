@@ -8,10 +8,8 @@ export type GameColliderComponent = {
 			x: number;
 			y: number;
 		};
-		//If should auto scale to the object size
-		fitToObject: boolean;
 	};
-	elipse?: {
+	ellipse?: {
 		scale?: {
 			x: number;
 			y: number;
@@ -21,9 +19,10 @@ export type GameColliderComponent = {
 			start: number;
 			end: number;
 		};
-		//If should auto scale to the object size
-		fitToObject: boolean;
 	};
+	//If should auto scale to the object size
+	fitToObject: boolean;
+	active: boolean;
 };
 
 export type GameCollidingComponents = Exclude<keyof GameObjectComponents, "camera">;

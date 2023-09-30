@@ -7,5 +7,6 @@ export type GameScriptComponent<T extends object = object> = (gameObject: GameOb
 	onUpdate: FrameFn;
 	onPause: FrameFn;
 	onCollisionEnter: (collisionInfo: GameCollision) => void;
+	onCollisionStay: (collisionInfo: GameCollision) => void;
 	onCollisionExit: (collisionInfo: GameCollision) => void;
 };

@@ -14,6 +14,8 @@ export class GameEngine2d {
 	private ui: GameUI;
 	private animationFrame = NaN;
 	public isPaused = false;
+	//Used to later check whether collision entered, exited or stayed
+	private gameObjectEnteredCollisions: { a: GameObject; b: GameObject }[] = [];
 
 	constructor(
 		size: Partial<GameSize>,
@@ -83,6 +85,7 @@ export class GameEngine2d {
 
 	private onUpdate = () => {
 		const ctx = this.ui.ctx;
+		this.checkCollision();
 		this.fireGameObjectFn((script) => script.onUpdate({ ctx }));
 		this.drawGameObjects(ctx);
 		this.animationFrame = window.requestAnimationFrame(this.onUpdate);
@@ -92,12 +95,92 @@ export class GameEngine2d {
 		this.fireGameObjectFn((script) => script.onPause({ ctx: this.ui.ctx }));
 	};
 
+	private checkCollision = () => {
+		const gameObjectWithCollider = this.activeScene.gameObjects.filter(
+			(gameObject) => !gameObject.component.collider
+		);
+		const gameObjectChecked = gameObjectWithCollider;
+
+		gameObjectWithCollider.forEach((a, index) => {
+			gameObjectChecked.forEach((b) => {
+				if (a.id === b.id) return;
+				const aTransform = a.component.transform;
+				const bTransform = b.component.transform;
+				const aCollider = a.component.collider;
+				const bCollider = b.component.collider;
+				let collided = false;
+				if (!bCollider?.active || !aCollider?.active) {
+					if (bCollider?.rectangle)
+						collided = multiDimensionalBound.rectangle(aTransform.position, {
+							center: bTransform.position,
+							xDisplacement: bCollider.fitToObject
+								? bTransform.scale.x
+								: bCollider.rectangle.scale?.x || 0,
+							yDisplacement: bCollider.fitToObject
+								? bTransform.scale.y
+								: bCollider.rectangle.scale?.y || 0,
+						});
+					if (bCollider?.ellipse)
+						collided = multiDimensionalBound.ellipse(aTransform.position, {
+							center: bTransform.position,
+							xRadius: bCollider.fitToObject
+								? bTransform.scale.x
+								: bCollider.ellipse.scale?.x || 0,
+							yRadius: bCollider.fitToObject
+								? bTransform.scale.y
+								: bCollider.ellipse.scale?.y || 0,
+						});
+				}
+				const match = (collision: { a: GameObject; b: GameObject }) =>
+					(collision.a.id === a.id && collision.b.id) ||
+					(collision.b.id === a.id && collision.a.id === b.id);
+				const wasColliding = this.gameObjectEnteredCollisions.find(
+					// The order of and b shouldn't change but in case we check if it has inverted
+					(collision) => match(collision)
+				);
+				if (!wasColliding) {
+					this.onCollisionEnter({ a, b });
+					this.gameObjectEnteredCollisions.push({
+						a,
+						b,
+					});
+				}
+				if (wasColliding && collided) this.onCollisionStay({ a, b });
+				else {
+					this.gameObjectEnteredCollisions = this.gameObjectEnteredCollisions.filter(
+						(collision) => match(collision)
+					);
+					this.onCollisionExit({ a, b });
+				}
+			});
+			gameObjectChecked.splice(index, 1);
+		});
+	};
+
+	private onCollisionEnter = ({ a, b }: { a: GameObject; b: GameObject }) => {
+		a.component.scripts?.forEach((script) => script(a).onCollisionEnter({ at, gameObject: b }));
+		b.component.scripts?.forEach((script) => script(a).onCollisionEnter({ at, gameObject: a }));
+	};
+	private onCollisionStay = ({ a, b }: { a: GameObject; b: GameObject }) => {
+		a.component.scripts?.forEach((script) => script(a).onCollisionStay({ at, gameObject: b }));
+		b.component.scripts?.forEach((script) => script(a).onCollisionStay({ at, gameObject: a }));
+	};
+	private onCollisionExit = ({ a, b }: { a: GameObject; b: GameObject }) => {
+		a.component.scripts?.forEach((script) => script(a).onCollisionExit({ at, gameObject: b }));
+		b.component.scripts?.forEach((script) => script(a).onCollisionExit({ at, gameObject: a }));
+	};
+
 	// ======== Game Objects ========
 
-	public destroy = (gameObject: GameObject) =>
-		(this.activeScene.gameObjects = this.activeScene.gameObjects.filter(
+	public destroy = (gameObject: GameObject) => {
+		this.activeScene.gameObjects = this.activeScene.gameObjects.filter(
 			(el) => el.id === gameObject.id
-		));
+		);
+		const id = gameObject.id;
+		this.gameObjectEnteredCollisions = this.gameObjectEnteredCollisions.filter(
+			(collision) => collision.a.id === id || collision.b.id === id
+		);
+	};
 
 	public addGameObject = (gameObject: GameObject) =>
 		pushAtSortPosition<GameObject>(
