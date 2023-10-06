@@ -25,6 +25,7 @@ This engine works under the HTML Canvas, for know only for 2d games. Anyway, we 
 -   [ ] Add ui auto re rendering and all that (follow kinda what [redom](https://github.com/redom/redom) does)
 -   [ ] Add Animated sprite renderer (custom shapes, etc) Component
 -   [ ] Camera zoom feature (will have to move all the positions relative to the camera position and zoom)
+-   [ ] Add elliptic and rectangular elliptic collisions (will have to move all the positions relative to the camera position and zoom)
 -   [ ] Create an example
 -   [ ] TileMaps Component
 -   [ ] RigidBody physics

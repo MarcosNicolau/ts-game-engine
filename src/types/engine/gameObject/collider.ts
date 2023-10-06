@@ -1,6 +1,5 @@
 import { GameObjectComponents } from ".";
 import { GameObject } from "../../../engine";
-import { Position } from "./transform";
 
 export type GameColliderComponent = {
 	rectangle?: {
@@ -29,5 +28,5 @@ export type GameCollidingComponents = Exclude<keyof GameObjectComponents, "camer
 
 export type GameCollision = {
 	gameObject: GameObject;
-	at: Position;
+	// at: Position;
 };

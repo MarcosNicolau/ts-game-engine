@@ -48,15 +48,23 @@ export class GameEngine2d {
 					!gameObject.component.spriteRenderer ||
 					gameObject.component.spriteRenderer.hidden
 			)
+			// Get the elements inside the camera
 			.filter((gameObject) => {
 				const cameraPos = this.activeScene.mainCamera.position;
-				multiDimensionalBound.rectangle(gameObject.component.transform.position, {
-					center: cameraPos,
-					//Display 10 pixels more so that if they spam when appearing in the screen
-					xDisplacement: this.ui.canvas.width + 10,
-					//Display 10 pixels more so that if they spam when appearing in the screen
-					yDisplacement: this.ui.canvas.height + 10,
-				});
+				return multiDimensionalBound.rectangular(
+					{
+						center: gameObject.component.transform.position,
+						displacement: gameObject.component.transform.scale,
+					},
+					{
+						center: cameraPos,
+						//Display 100 pixels more so that the don't when appearing in the screen
+						displacement: {
+							x: this.ui.canvas.width + 100,
+							y: this.ui.canvas.height + 100,
+						},
+					}
+				);
 			})
 			.forEach((gameObject) => {
 				draw({ ctx, gameObject });
@@ -74,8 +82,8 @@ export class GameEngine2d {
 	private onStart = () => {
 		const ctx = this.ui.ctx;
 		this.ui.initialRender(this.activeScene.gameObjects);
-		this.drawGameObjects(ctx);
 		this.fireGameObjectFn((script) => script.onStart({ ctx }));
+		this.drawGameObjects(ctx);
 		this.animationFrame = window.setTimeout(
 			() => window.requestAnimationFrame(this.onUpdate),
 			60
@@ -110,30 +118,36 @@ export class GameEngine2d {
 				const bCollider = b.component.collider;
 				let collided = false;
 				if (!bCollider?.active || !aCollider?.active) {
-					if (bCollider?.rectangle)
-						collided = multiDimensionalBound.rectangle(aTransform.position, {
-							center: bTransform.position,
-							xDisplacement: bCollider.fitToObject
-								? bTransform.scale.x
-								: bCollider.rectangle.scale?.x || 0,
-							yDisplacement: bCollider.fitToObject
-								? bTransform.scale.y
-								: bCollider.rectangle.scale?.y || 0,
-						});
-					if (bCollider?.ellipse)
-						collided = multiDimensionalBound.ellipse(aTransform.position, {
-							center: bTransform.position,
-							xRadius: bCollider.fitToObject
-								? bTransform.scale.x
-								: bCollider.ellipse.scale?.x || 0,
-							yRadius: bCollider.fitToObject
-								? bTransform.scale.y
-								: bCollider.ellipse.scale?.y || 0,
-						});
+					if (bCollider?.rectangle && aCollider?.rectangle)
+						collided = multiDimensionalBound.rectangular(
+							{
+								center: aTransform.position,
+								displacement: {
+									x: aCollider.fitToObject
+										? aTransform.scale.x
+										: aCollider.rectangle.scale?.x || 0,
+									y: aCollider.fitToObject
+										? aTransform.scale.y
+										: aCollider.rectangle?.scale?.y || 0,
+								},
+							},
+							{
+								center: bTransform.position,
+								displacement: {
+									x: bCollider.fitToObject
+										? bTransform.scale.x
+										: bCollider.rectangle.scale?.x || 0,
+									y: bCollider.fitToObject
+										? bTransform.scale.y
+										: bCollider.rectangle.scale?.y || 0,
+								},
+							}
+						);
 				}
 				const match = (collision: { a: GameObject; b: GameObject }) =>
 					(collision.a.id === a.id && collision.b.id) ||
 					(collision.b.id === a.id && collision.a.id === b.id);
+
 				const wasColliding = this.gameObjectEnteredCollisions.find(
 					// The order of and b shouldn't change but in case we check if it has inverted
 					(collision) => match(collision)
@@ -158,16 +172,16 @@ export class GameEngine2d {
 	};
 
 	private onCollisionEnter = ({ a, b }: { a: GameObject; b: GameObject }) => {
-		a.component.scripts?.forEach((script) => script(a).onCollisionEnter({ at, gameObject: b }));
-		b.component.scripts?.forEach((script) => script(a).onCollisionEnter({ at, gameObject: a }));
+		a.component.scripts?.forEach((script) => script(a).onCollisionEnter({ gameObject: b }));
+		b.component.scripts?.forEach((script) => script(a).onCollisionEnter({ gameObject: a }));
 	};
 	private onCollisionStay = ({ a, b }: { a: GameObject; b: GameObject }) => {
-		a.component.scripts?.forEach((script) => script(a).onCollisionStay({ at, gameObject: b }));
-		b.component.scripts?.forEach((script) => script(a).onCollisionStay({ at, gameObject: a }));
+		a.component.scripts?.forEach((script) => script(a).onCollisionStay({ gameObject: b }));
+		b.component.scripts?.forEach((script) => script(a).onCollisionStay({ gameObject: a }));
 	};
 	private onCollisionExit = ({ a, b }: { a: GameObject; b: GameObject }) => {
-		a.component.scripts?.forEach((script) => script(a).onCollisionExit({ at, gameObject: b }));
-		b.component.scripts?.forEach((script) => script(a).onCollisionExit({ at, gameObject: a }));
+		a.component.scripts?.forEach((script) => script(a).onCollisionExit({ gameObject: b }));
+		b.component.scripts?.forEach((script) => script(a).onCollisionExit({ gameObject: a }));
 	};
 
 	// ======== Game Objects ========
