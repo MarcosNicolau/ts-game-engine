@@ -37,5 +37,3 @@ To build the different apis we are following the vocabulary and flow of unity. T
 Also, a lot of the things that are being built could be much better in terms of performance. For now we are sticking to make everything work and later we'll see how to optimize it all.
 
 Here I am writing the things that we could improve in terms of API/performance/design but work alright(so that we don't forget)
-
--   **GameObjectsDrawing**: Should put the gameobjects to render in a separated array.
