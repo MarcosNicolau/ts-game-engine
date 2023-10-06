@@ -25,12 +25,12 @@ This engine works under the HTML Canvas, for know only for 2d games. Anyway, we 
 -   [ ] Add ui auto re rendering and all that (follow kinda what [redom](https://github.com/redom/redom) does)
 -   [ ] Add Animated sprite renderer (custom shapes, etc) Component
 -   [ ] Camera zoom feature (will have to move all the positions relative to the camera position and zoom)
--   [ ] Add elliptic and rectangular elliptic collisions (will have to move all the positions relative to the camera position and zoom)
+-   [ ] Add elliptic collisions
 -   [ ] Create an example
 -   [ ] TileMaps Component
 -   [ ] RigidBody physics
 -   [ ] Local saving API
--   [ ] Some kind of Network API (Support for React query, base fetch)
+-   [ ] Some kind of Network API
 
 To build the different apis we are following the vocabulary and flow of unity. That is why it is a good idea to read their documentation and watch videos about the specific of the work in unity.
 
